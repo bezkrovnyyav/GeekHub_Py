@@ -10,11 +10,11 @@
 
 def comparison_numbers(x, y):
     if x == y:
-        print('вiдповiдь -', x, 'дорiвнює', y)
+        print(f'вiдповiдь - {x} дорiвнює {y}')
     elif x > y:
-        print('вiдповiдь -', x, 'бiльше', y, f'на {x - y}')
+        print(f'вiдповiдь - {x} бiльше {y} на {x - y}')
     else:
-        print('вiдповiдь -', y, 'бiльше', x, f'на {y - x}')
+        print(f'вiдповiдь - {y} бiльше {x} на {y - x}')
 
 
 if __name__ == '__main__':
