@@ -20,7 +20,7 @@ def checking_func(some_str):
         print("Сумма чисел:",sum(new_list), "\n Буквенный ряд:", letters)
 
     elif 50 < len(some_str):
-        print("Букви в порядку зростання:", "".join(sorted(letters)))
-        print("Числа в порядку зростання:", "".join(sorted(numbers)))
+        print("Буквы по возростанию:", "".join(sorted(letters)))
+        print("Числа по возростанию:", "".join(sorted(numbers)))
 if __name__ == '__main__':
     checking_func("fi4nr0c3n30irn03ien3c0rfekdno400wenwkowe00koijn35pijnp46ij7k5j78p3kj546p465jnpoj35po6uk6")
