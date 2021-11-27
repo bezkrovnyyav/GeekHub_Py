@@ -10,5 +10,5 @@ def square_func(square_side):
     return result
     
 if __name__ == '__main__':
-    square_side = int(input('Input the sid eof square: '))
+    square_side = int(input('Input the side of square: '))
     print(square_func(square_side))
