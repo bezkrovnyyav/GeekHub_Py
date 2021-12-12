@@ -1,0 +1,52 @@
+[
+    {
+        "Transaction": 1,
+        "Operation": "check balance",
+        "Balance": 1000
+    },
+    {
+        "Transaction": 2,
+        "Operation": "deposite",
+        "Balance": "+100"
+    },
+    {
+        "Transaction": 3,
+        "Operation": "deposite",
+        "Balance": "+20"
+    },
+    {
+        "Transaction": 4,
+        "Operation": "check balance",
+        "Balance": 1120
+    },
+    {
+        "Transaction": 5,
+        "Operation": "deposite",
+        "Balance": "+20"
+    },
+    {
+        "Transaction": 6,
+        "Operation": "withdraw",
+        "Balance": "-20"
+    },
+    {
+        "Transaction": 7,
+        "Operation": "check balance",
+        "Balance": 1120
+    },
+    {
+        "Transaction": 8,
+        "Operation": "withdraw",
+        "Balance": "-100"
+    },
+    {
+        "Transaction": 9,
+        "Operation": "check balance",
+        "Balance": 1020
+    },
+    {
+        "Transaction": 10,
+        "Operation": "check balance",
+        "Balance": 1020
+    }
+]
