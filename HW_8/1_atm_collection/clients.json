@@ -1,7 +1,7 @@
 [
-    {"username":"Andrii", "password": "qwerty1"},
-    {"username": "Sonia", "password": "qwerty2"},
-    {"username": "Miker", "password": "qwerty3"},
-    {"username": "Nobody", "password": "qwerty5"},
+    {"username":"Andrii", "password": "1"},
+    {"username": "Sonia", "password": "2"},
+    {"username": "Miker", "password": "3"},
+    {"username": "Nobody", "password": "4"},
     {"username": "collection", "password": "collection"}
 ]

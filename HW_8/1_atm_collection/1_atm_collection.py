@@ -1,19 +1,6 @@
-'''
-1. Доповніть програму-банкомат з попереднього завдання таким функціоналом, як використання банкнот.
-   Отже, у банкомата повинен бути такий режим як "інкассація", за допомогою якого в нього можна "загрузити" деяку кількість банкнот (вибирається номінал і кількість).
-   Зняття грошей з банкомату повинно відбуватись в межах наявних банкнот за наступним алгоритмом - видається мінімальна кількість банкнот наявного номіналу. P.S. Будьте обережні з використанням "жадібного" алгоритму (коли вибирається спочатку найбільша банкнота, а потім - наступна за розміром і т.д.) - в деяких випадках він працює неправильно або не працює взагалі. Наприклад, якщо треба видати 160 грн., а в наявності є банкноти номіналом 20, 50, 100, 500,  банкомат не зможе видати суму (бо спробує видати 100 + 50 + (невідомо), а потрібно було 100 + 20 + 20 + 20 ).
-   Особливості реалізації:
-   - перелік купюр: 10, 20, 50, 100, 200, 500, 1000;
-   - у одного користувача повинні бути права "інкасатора". Відповідно і у нього буде своє власне меню із пунктами:
-     - переглянути наявні купюри;
-     - змінити кількість купюр;
-   - видача грошей для користувачів відбувається в межах наявних купюр;
-   - якщо гроші вносяться на рахунок - НЕ ТРЕБА їх розбивати і вносити в банкомат - не ускладнюйте собі життя, та й, наскільки я розумію, банкомати все, що в нього входить, відкладає в окрему касету.
-2. Для кращого засвоєння - перед написанням коду із п.1 - видаліть код для старої програми-банкомату і напишіть весь код наново (завдання на самоконтроль).
-   До того ж, скоріш за все, вам прийдеться і так багато чого переписати.
-'''
-
+import datetime
 import json
+from collections import Counter
 import os
 
 def check_user():
@@ -65,7 +52,7 @@ Your choice: '''))
 
 def get_money(money):  
     # finding the minimum possible amount for issuing money using the dynamic programming algorithm
-    lst_banknotes = [1000, 500, 200, 100, 50, 20]
+    lst_banknotes = [1000, 500, 200, 100, 50, 20] 
     INF = 10 ** 10
     F = [INF] * (money + 1)
     F [0] = 0
@@ -82,19 +69,6 @@ def get_money(money):
                 result_banknotes.append(lst_banknotes[i])
                 k -= lst_banknotes[i]
     return result_banknotes
-
-
-def check_enough_banknotes_atm(money):  
-    # checking the sufficient number of denominations of banknotes in the ATM
-    lst_banknotes =  get_money(money)  # [500, 100, 20, 20, 20]
-    dict_number_banknotes = {str(i): lst_banknotes.count(i) for i in lst_banknotes}  # {'100': 1, '20': 3, '500': 1}
-    collection = 'collection'
-    user_file = collection + '_balance.json'  # allmoneyin ATM
-    with open(user_file, "r") as f:
-        dict_collection_balance =  json.load(f)  # {"20": 60, "50": 50, "100": 50, "200": 50, "500": 50, "1000": 50}
-    result_dict = {key: dict_collection_balance[key]-dict_number_banknotes[key] for key in dict_collection_balance if key in dict_number_banknotes}  # all moneyin ATM after withdrawing {'20': 0, '100': 49, '500': 49}
-    return all(value >= 0 for value in result_dict.values())
-
 
 def check_balance_ATM(operation):
     user = 'collection'
@@ -216,32 +190,71 @@ def deposite(user, money):
     add_transaction(user, operation, money)
     return balance["account"]
 
+def elem_counter(some_list):
+    counter = Counter()
+    for element in some_list:
+        counter[element] += 1
+    return counter.most_common()
 
-def withdraw(user, money):
-    # decrise money from the user`s balance
-    operation = "withdraw"
-    user_file = user + "_balance.json"  
-    with open(user_file, "r") as f:
-        balance =  json.load(f)
-    balance["account"] -= money
-    with open(user_file, "w") as f:
-        json.dump(balance, f)
-    add_transaction(user, operation, money)
-    lst_banknotes =  get_money(money)  # debiting the account of the ATM
-    dict_number_banknotes = {str(i): lst_banknotes.count(i) for i in lst_banknotes}
-    user = 'collection'
+
+def withdraw_money(user, sum_money, operation):
+    summ_in = 0
+    with open('collection_balance.json', 'r', encoding='utf-8') as money_in:
+        money_in = money_in.readline()
+        money_in = json.loads(money_in)
+        print('There is denominations in our ATM:')
+        for denomination in money_in:
+            if int(money_in[denomination]) != 0:
+                print(f'{denomination}', end=' ')
+                summ_in += int(money_in[denomination]) * int(denomination)
+        print(f'\nYou can take {summ_in}')
+    if sum_money <= 0:
+        print("Error")
+    if summ_in < sum_money:
+        print(f'ATM doesn`t have enough money')
+        return     
+
     user_file = user + "_balance.json"
     with open(user_file, "r") as f:
-        dict_collection_balance =  json.load(f)
-    result_dict = {key: dict_collection_balance[key]-dict_number_banknotes[key] for key in dict_collection_balance if key in dict_number_banknotes}
-    dict_collection_balance.update(result_dict)  # update collection
-    dict_digit = {int(k):v for k, v in dict_collection_balance.items()}
-    dict_digit_sorted = dict(sorted(dict_digit.items()))
-    dict_collection_balance_str = {str(k):v for k, v in dict_digit_sorted.items()}
-    with open(user_file, "w") as f:
-        json.dump(dict_collection_balance_str, f)
-    add_transaction(user, operation, money)
-    return
+        balance =  json.load(f)
+        old_balance = balance["account"] 
+        if sum_money > old_balance:
+            print(f'You don`t have enough money on your balance')
+            return
+            
+    denominations_give = []
+    money_after_income = money_in.copy()
+    summ_to_give = sum_money
+    iterlist = list(money_in.keys())
+    iterlist.sort(key=lambda x: int(x), reverse=True)
+    while summ_to_give > 0:
+        for denomination in iterlist:
+            if int(money_after_income[denomination]) != 0 and summ_to_give % int(denomination) == 0:
+                summ_to_give -= int(denomination)
+                denominations_give.append(int(denomination))
+                money_after_income[denomination] -= 1
+            else:
+                continue
+            break
+        else:
+            print('ATM can`t give you that summ')
+            return
+            
+    new_balance = old_balance - sum_money
+    add_transaction(user, sum_money, operation)
+    print(f'You received')
+    for element in elem_counter(denominations_give):
+        print(f'{element[0]} - {element[1]} bills')
+    print(f'Thank your for using our ATM, you withdraw {sum_money}, now your balance is {new_balance}')
+    balance["account"] = new_balance
+
+    with open(user_file, 'w', encoding='utf-8') as money_income:
+        balance = json.dumps(balance)
+        money_income.write(balance)
+
+    with open('collection_balance.json', 'w', encoding='utf-8') as money_in:
+        money_after_income = json.dumps(money_after_income)
+        money_in.write(money_after_income)
 
 
 def start():
@@ -273,20 +286,18 @@ def start():
                     print('Input only a numeric value!\n')    
 
             elif selection == 3:
+                money = input('Input the amount: ')
+
                 print('Withdraw money')
                 operation = "withdraw"
-                money = input('Input the amount: ')
                 if money.isdigit():
                     money = int(money)
                     if money != 0 and money % 10 == 0 and money not in [10, 30]:
-                        if check_balance(user, operation) - money >= 0:
-                            if check_balance_ATM(operation) - money >= 0:
-                                if check_enough_banknotes_atm(money):
-                                    withdraw(user, money)
-                                    print(f'There are {check_balance(user, operation)} $ on your account, It has been deducted from it {money} $')
-                                    print('Banknotes: ', *get_money(money), '$\n')
-                                else:
-                                    print('ATM does not have banknotes to issue the specified amount!')
+                        if check_balance(user, operation) - money != 0:
+                            if check_balance_ATM(operation) - money != 0:
+                                withdraw_money(user, money, operation)
+
+
                             else:
                                 print('At the moment, the ATM does not have enough funds to issue the specified amount!\n')                
                         else:
@@ -306,4 +317,3 @@ def start():
 
 if __name__ =='__main__':
     start()
-
