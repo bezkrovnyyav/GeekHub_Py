@@ -13,15 +13,15 @@ def check_user():
         password = input('Input password: ')
         if  any(i.get('username') == username for i in users_data):
             if any(i.get('password') == password for i in users_data):
-                print('You are  entered into the atm system!\n')
+                print('You are not entered into the atm system!\n')
                 if username == 'collection':
                     atm_collection(username)
                 return username 
             else:
-                print('You have input incorrect password !')
+                print('You have enteres incorrect password !')
                 tries += 1
         else:
-            print('You have input incorrect username !')
+            print('You have enteres incorrect username !')
             tries += 1
     print('Sorry, you entered incorrect data three times.\nYour card is be blocked !')
     return False
@@ -37,7 +37,7 @@ Your choice: '''))
         if selection == 1:
             print('Check the balance')
             operation = "check balance ATM"
-            print(f'There are {check_balance_ATM(operation)} $ in ATM \n')
+            print(f'There are {check_balance_ATM(operation)} $ inthe ATM \n')
         elif selection == 2:
             print('Increased the ATM')
             load_atm(user)
