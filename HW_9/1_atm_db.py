@@ -1,4 +1,4 @@
-'''
+"""
 Перепишіть програму-банкомат на використання бази даних для збереження всих даних.
 Використовувати БД sqlite3 та натівний Python.
 Дока з прикладами: https://docs.python.org/3/library/sqlite3.html
@@ -7,341 +7,410 @@
   ім'я: user1, пароль: user1
   ім'я: user2, пароль: user2
   ім'я: admin, пароль: admin (у цього коритувача - права інкасатора)
-'''
+"""
 
-import sqlite3 
+
+
+import sqlite3
+import datetime
 import json
-import os
-import random
- 
-def check_user():
-    tries = 0
-    while tries < 3:
-        atm_database = 'ATM_database.db'
-        with sqlite3.connect(atm_database) as db:
-            cursor = db.cursor()
-        username = input('Input username: ')
-        password = input('Input password: ')
-        find_user = ('SELECT * FROM users WHERE username = ?')
-        cursor.execute(find_user, [username])
-        result_find_user = cursor.fetchone()
-        find_password = ('SELECT * FROM users WHERE password = ?')
-        cursor.execute(find_password, [password])
-        result_find_password = cursor.fetchone()
-        if  result_find_user:  # проверка пароля юзера
-            result_find_user = result_find_user[0]
-            if  result_find_password:  
-                result_find_password = result_find_password[0]
-                print('You are  entered into the atm system!\n')
-                if username == 'admin':
-                    atm_collection(username)  # переход в инкасацию админом
-                return username # возвращение к меню атм
-            else:
-                print('You have input incorrect password !')
-                tries += 1
-        else:
-            print('You have input incorrect username !')
-            tries += 1
-    print('Sorry, you entered incorrect data three times.\nYour card is be blocked !')
-    return False
- 
- 
-def atm_collection(user):
-    while True:
-        selection = int(input('''Input the operation: 
-    1. Check the balance
-    2. Increased the ATM
-    3. Exit
+from collections import Counter
 
-Your choice: '''))
-        if selection == 1:
-            print('Check the balance')
-            operation = "check balance ATM"
-            print(f'There are {check_balance_ATM(operation)} $ in ATM\n')
-        elif selection == 2:
-            print('Increased the ATM')
-            load_atm(user)
-        elif selection == 3:
-            print('Exit!\nATM system finished work!')
+conn = sqlite3.connect('atm.db')
+cur = conn.cursor()
+
+
+class User:
+    conn = sqlite3.connect('atm.db')
+    cur = conn.cursor()
+
+    def __init__(self, username):
+        user = cur.execute(f"SELECT * FROM users WHERE username='{username}'").fetchone()
+        self.__user = user
+        self.__username = self.__user[1]
+        self.__password = self.__user[2]
+        self.__balance = self.__user[3]
+        self.__status = self.__user[4]
+
+    def get_username(self):
+        return self.__username
+
+    def get_password(self):
+        return self.__password
+
+    def get_balance(self):
+        return int(self.__balance)
+
+    def get_status(self):
+        return self.__status
+
+    def change_balance(self, change):
+        new_balance = self.__balance + change
+        cur.execute(f"UPDATE users SET balance = {new_balance} WHERE username = '{self.__username}'")
+        conn.commit()
+
+    def change_password(self, new_password):
+        cur.execute(f"UPDATE users SET password = '{new_password}' WHERE username = '{self.__username}'")
+        conn.commit()
+
+    def block(self):
+        cur.execute(f"UPDATE users SET status = 'Blocked' WHERE username = '{self.__username}'")
+        conn.commit()
+
+    def unblock(self):
+        cur.execute(f"UPDATE users SET status = 'Active' WHERE username = '{self.__username}'")
+        conn.commit()
+
+
+class Atm:
+    conn = sqlite3.connect('atm.db')
+    cur = conn.cursor()
+
+    def __init__(self):
+        atm = cur.execute('SELECT * FROM denominations;').fetchall()
+        self.__denominations = {
+            atm[0][0]: int(atm[0][1]),
+            atm[1][0]: int(atm[1][1]),
+            atm[2][0]: int(atm[2][1]),
+            atm[3][0]: int(atm[3][1]),
+            atm[4][0]: int(atm[4][1]),
+            atm[5][0]: int(atm[5][1]),
+            atm[6][0]: int(atm[6][1]),
+        }
+
+    def get_denominations(self):
+        return self.__denominations
+
+    def change(self, new_values: dict):
+        for value in new_values:
+            cur.execute(f"UPDATE denominations SET count = '{new_values[value]}' WHERE denomination = '{value}'")
+        conn.commit()
+
+
+class NegativeMeaning(Exception):
+    pass
+
+
+def create_db():
+    conn = sqlite3.connect('atm.db')
+    cur = conn.cursor()
+
+    fop = open('atm.db', 'w')
+    fop.close()
+    cur.execute("""CREATE TABLE IF NOT EXISTS users(
+           user_id INT PRIMARY KEY,
+           username TEXT,
+           password TEXT,
+           balance INT,
+           status TEXT)""")
+    cur.execute("""CREATE TABLE IF NOT EXISTS denominations (
+           denomination INT PRIMARY KEY,
+           count INT)""")
+    cur.execute("""CREATE TABLE IF NOT EXISTS transactions (
+          transaction_id INT PRIMARY KEY,
+          operation TEXT,
+          username TEXT)""")
+    users = [('1', 'user1', 'user1', '1500', 'Active'),
+             ('2', 'user2', 'user2', '1500', 'Active'),
+             ('3', 'admin', 'admin', '0', 'Collector')
+             ]
+    denominations = [(10, 100),
+                     (20, 100),
+                     (50, 100),
+                     (100, 100),
+                     (200, 100),
+                     (500, 100),
+                     (1000, 100)
+                     ]
+    cur.executemany("""INSERT INTO users VALUES(?,?,?,?,?);""", users)
+    cur.executemany("""INSERT INTO denominations VALUES(?,?);""", denominations)
+    cur.execute("""CREATE TABLE IF NOT EXISTS transactions (
+               id INT PRIMARY KEY,
+               operations TEXT)
+               """)
+    conn.commit()
+
+
+def password_validator():
+    password_1 = input('Input your new password here: ')
+    password_2 = input('Repeat new password: ')
+    if password_1 == password_2:
+        return password_1
+    else:
+        return password_validator()
+
+
+def elements_counter(some_list):
+    counter = Counter()
+    for element in some_list:
+        counter[element] += 1
+    return counter.most_common()
+
+
+def incasation(login):
+    atm = Atm()
+    money_in = atm.get_denominations()
+    addmoney = money_in.copy()
+    for denomination in money_in:
+        add = int(input(f'Print count denomination {denomination}: '))
+        if add < 0:
+            raise NegativeMeaning('You can`t add negative count of money :)')
+        addmoney[denomination] += add
+    atm.change(addmoney)
+    print('Money loaded successfully!')
+    collectors_menu(login)
+
+
+def checking_denominations(login):
+    atm = Atm()
+    money_in = atm.get_denominations()
+    for denomination in money_in:
+        print(f'{denomination}: {money_in[denomination]}')
+    collectors_menu(login)
+
+
+def finish(login):
+    print('Thank you, good luck!')
+    exit()
+
+
+def blocker(login):
+    user = User(login)
+    if user.get_status() == 'Collector':
+        finish(login)
+    else:
+        user.block()
+        print('Your account was blocked')
+        finish(login)
+
+
+def unblocker(login):
+    user = User(login)
+    print('To unlock your account, answer the secret question: ')
+    answer = input('What is the best programming language is the best? ')
+    if answer == 'python' or 'Python':
+        user.unblock()
+        print('Account unlocked!')
+        start()
+    else:
+        print('Sorry, answer is incorrect, try again later!')
+
+
+def new_user(login):
+    conn = sqlite3.connect('atm.db')
+    cur = conn.cursor()
+    users = cur.execute(f"SELECT username FROM users").fetchall()
+    for user in users:
+        if user[0] == login:
+            print(f'Name {login} was already taken')
+            finish(login)
+    password = password_validator()
+    transaction = {'transaction': 'new_user',
+                   'date': str(datetime.datetime.now()),
+                   'balance_before': 0,
+                   'balance_after': 0}
+    transaction = json.dumps(transaction)
+    cur.execute("INSERT INTO transactions (operation, username)  VALUES (?, ?)", (transaction, login))
+    cur.execute("INSERT INTO users (username, password, balance, status) VALUES (?, ?, ?, ?)",
+                (login, password, '0', 'Active'))
+    conn.commit()
+    start()
+
+
+def authenticated(login):
+    user = User(login)
+    for attempt in range(3):
+        if user.get_password() == input(f'Input your password, you have {3 - attempt} attempts '):
+            return True
+        else:
+            if attempt != 2:
+                print(f'Incorrect password, try again, you have {2 - attempt} attempts ')
+            else:
+                print('Too many attempts')
+                return blocker(login)
+
+
+def show_balance(login):
+    user = User(login)
+    print(user.get_balance())
+    choise = input('What do you want to do?\n'
+                   '1 for withdraw money\n'
+                   '2 to Add money on your account\n'
+                   '3 to exit\n')
+    choises = {
+        '1': withdraw_money,
+        '2': add_money,
+        '3': finish
+    }
+    return choises[choise](login)
+
+
+def add_money(login):
+    user = User(login)
+    summ = int(input('Input the amount you want to add '))
+    old_balance = user.get_balance()
+    if summ < 0:
+        raise NegativeMeaning()
+    user.change_balance(summ)
+    user = User(login)
+    new_balance = user.get_balance()
+    transaction = {'transaction': f'adding {summ}',
+                    'date': str(datetime.datetime.now()),
+                    'balance_before': old_balance,
+                    'balance_after': new_balance}
+    transaction = json.dumps(transaction)
+    cur.execute("INSERT INTO transactions (operation, username)  VALUES (?, ?)", (transaction, login))
+    conn.commit()
+    print(f'Thank your for using our ATM, you add {summ}, and now your balance is {new_balance}')
+    if input('Do you want to continue (print yes or no)') == 'yes':
+        menu(login)
+    else:
+        finish(login)
+
+
+def withdraw_money(login):
+    user = User(login)
+    atm = Atm()
+    money_in = atm.get_denominations()
+    summ_in = 0
+    for denomination in money_in:
+        if int(money_in[denomination]) != 0:
+            print(f'{denomination}', end=' ')
+            summ_in += int(money_in[denomination]) * int(denomination)
+    print(f'\nYou can take {summ_in}')
+    print(f'You have {user.get_balance()} on your account')
+    summ = int(input('Input the amount you want to withdraw '))
+    if summ <= 0:
+        raise NegativeMeaning()
+    if summ_in < summ:
+        print(f'ATM doesn`t have enough money')
+        if input('Do you want to continue (print yes or no)') == 'yes':
+            menu(login)
+        else:
+            finish(login)
+    old_balance = user.get_balance()
+    if summ > old_balance:
+        print(f'You don`t have enough money on the balance')
+        if input('Do you want to continue (print yes or no)') == 'yes':
+            menu(login)
+        else:
+            finish(login)
+    denominations_give = []
+    money_after_give = money_in.copy()
+    summ_to_give = summ
+    iterlist = list(money_in.keys())
+    iterlist.sort(key=lambda x: int(x), reverse=True)
+    while summ_to_give > 0:
+        for denomination in iterlist:
+            if int(money_after_give[denomination]) != 0 and summ_to_give % int(denomination) == 0:
+                summ_to_give -= int(denomination)
+                denominations_give.append(int(denomination))
+                money_after_give[denomination] -= 1
+            else:
+                continue
             break
         else:
-            print('Incorret choise! Please, try agane!')
-    else:
-        print('ATM system finished work!')
- 
- 
-def get_money(money):  # нахождения списка банкнот,которае есть в атм
-    real_banknotes = []
-    lst_banknotes = []
-    with open('admin_balance.json', 'r', encoding='utf-8') as g:
-        real_banknotes = json.load(g)
-        for actual_balance in real_banknotes:
-            if real_banknotes[actual_balance] != 0:
-                lst_banknotes.append(actual_balance)
-        lst_banknotes = list(map(int, lst_banknotes))
-    INF = 10 ** 10
-    F = [INF] * (money + 1)
-    F[0] = 0
-    for k in range(1, money + 1):
-        for i in range(len(lst_banknotes)):
-            if k - lst_banknotes[i] >= 0 and F[k - lst_banknotes[i]] < F[k]:
-                F[k] = F[k - lst_banknotes[i]]
-        F[k] += 1
-    result_banknotes = []
-    k = money
-    while k != 0:
-        for i in range(len(lst_banknotes)):
-            if k - lst_banknotes[i] >= 0 and F[k] == F[k - lst_banknotes[i]] + 1:
-                result_banknotes.append(lst_banknotes[i])
-                k -= lst_banknotes[i]
-    return result_banknotes[:]
- 
- 
-def check_enough_banknotes_atm(money):  # проверка наявности необходимыхбанкнот в атм,  money = 400
-    lst_banknotes =  get_money(money)  # поверка через get_money [100,100,100,100] если нет 200-х
-    dict_number_banknotes = {str(i): lst_banknotes.count(i) for i in lst_banknotes}  # для изымания банкнот из словаря-баланса атм
-    user = 'admin'
-    user_file = user + "_balance.json"  # сагрузка всего словаря-баланса атм
-    with open(user_file, "r") as f:
-        dict_admin_balance =  json.load(f) 
-    result_dict = {key: dict_admin_balance[key]-dict_number_banknotes[key] for key in dict_admin_balance if key in dict_number_banknotes}  # перевірка на залишення в банкоматі коштів при знятті грошей, наприк. {'20': 0, '100': 49, '500': 49}
-    return all(value >= 0 for value in result_dict.values())
- 
- 
-def check_balance_ATM(operation):
-    user = 'admin'
-    user_file = user + "_balance.json"
-    with open(user_file, "r") as f:
-        admin_balance =  json.load(f)
-    all_money = (sum(int(bancknote) * value for bancknote, value in admin_balance.items()))  
-    if operation == "check balance ATM":  # проверка баланса АТМ
-        print(f'In ATM there are {all_money} $', '\n')
-        print('Now in ATM there are: ')
-        for bancknote, value in admin_balance.items():
-            print(f"Banknotes {bancknote} $ - {value} pcs.")
-        add_transaction(user, operation, all_money)  # в файл транзакции по админу
-    return all_money  # возврат всех наявных денег в атм
- 
- 
-def check_banknote(user, banknote):  # перевіряє та повертає кількість банкнот зазначеного номіналу
-    user_file = user + "_balance.json"
-    with open(user_file, "r") as f:
-        admin_balance =  json.load(f)
-    banknote = str(banknote)  # json ключі str типа
-    return admin_balance[banknote]
- 
- 
-def add_cash_to_atm(user, banknote, number):
-    user_file = user + "_balance.json"
-    with open(user_file, "r") as f:
-        admin_balance =  json.load(f)
-    banknote = str(banknote)  # json ключі str типа
-    admin_balance[banknote] += number
-    with open(user_file, "w") as f:
-        json.dump(admin_balance, f)
-    with open(user_file, "r") as f:
-        balance =  json.load(f)
-    operation = "load ATM"
-    banknote = int(banknote)  # числовые данные
-    money = banknote * number  # сумма пополнения указаного номинала
-    add_transaction(user, operation, money)
-    print(f'It is loaded at ATM {number} banknotes: {banknote} $ Всього завантажено {money} $\n')
- 
- 
-def load_atm(user):
-    banknote = input('Input the denomination of banknotes ($ 20, 50, 100, 200, 500 or 1000 $) : ')
-    if banknote.isdigit():
-        banknote = int(banknote)
-        if banknote in [20, 50, 100, 200, 500, 1000]:
-            number = input('Input denomination of banknotes: ')
-            if number.isdigit():
-                number = int(number)
-                if 0 < number < 100:
-                    banknotes_in_atm  = check_banknote(user, banknote)
-                    if number + banknotes_in_atm <= 100:
-                        add_cash_to_atm(user, banknote, number)  # внести деньги 
-                    else:
-                         print(f'In ATM there is {banknote} $ in quantity {banknotes_in_atm} pcs. \n\
-You can put this banknote in quantity {100 - banknotes_in_atm} pcs.')
-                else:
-                    print('You can load from 1 to 100 banknotes in the ATM. Input the correct number.')        
+            print('ATM can`t give you that summ')
+            if input('Do you want to continue (print yes or no)') == 'yes':
+                menu(login)
             else:
-                print('Input only a numeric value!\n')
-        else:
-            print('The ATM does not support this denomination!')
-    else:
-        print('Input only a numeric value!\n')        
- 
- 
-def add_transaction(user, operation, money):
-    user_account = user + '_transactions'
-    atm_database = 'ATM_database.db'
-    with sqlite3.connect(atm_database) as db:
-        cursor = db.cursor()
-    # Create a table for user inside 'ATM_database.db' with create some fields: Transaction Operation Balance
-    cursor.execute(f'''CREATE TABLE IF NOT EXISTS {user_account} (
-        Transactions INTEGER PRIMARY KEY AUTOINCREMENT,
-        Operation    CHAR    NOT NULL,
-        Balance      TEXT    NOT NULL
-        );''')
-    db.commit ()
-    # check user operation
-    if operation == "deposite":
-        money = "+" + str(money)
-    elif operation == "withdraw":
-        money = "-" + str(money)
-    # work for dict of user_info
-    user_info = {'Operation':operation, 'Balance':money}
-    user_sql = (f"INSERT INTO {user_account} VALUES (NULL, :Operation, :Balance)")
-    cursor.execute(user_sql, user_info)
-    db.commit ()
-    return
- 
- 
-def check_balance(user, operation):
-    atm_database = 'ATM_database.db'
-    with sqlite3.connect(atm_database) as db:
-        cursor = db.cursor()
-    find_balance = ('SELECT account FROM users_balances WHERE username = ?')
-    cursor.execute(find_balance, [user])
-    balance = cursor.fetchone()
-    money = balance[0]  
-    if operation == "deposite" or operation == "withdraw" or operation == "user bonus":
-        return money
-    else:
-        add_transaction(user, operation, money)
-    return money
- 
- 
-def deposite(user, money):
-    operation = "deposite"
-    atm_database = 'ATM_database.db'
-    with sqlite3.connect(atm_database) as db:
-        cursor = db.cursor()
-    find_balance = ('SELECT account FROM users_balances WHERE username = ?')
-    cursor.execute(find_balance, [user])
-    balance = cursor.fetchone()
-    balance = balance[0]
-    balance += money  # add money to user account
-    update_balance = ('UPDATE users_balances SET account = ? WHERE username = ?')
-    cursor.execute(update_balance, [balance, user])
-    db.commit()
-    add_transaction(user, operation, money)
-    return balance
- 
- 
-def withdraw(user, money):  
-    operation = "withdraw"
-    atm_database = 'ATM_database.db'
-    with sqlite3.connect(atm_database) as db:
-        cursor = db.cursor()
-    find_balance = ('SELECT account FROM users_balances WHERE username = ?')
-    cursor.execute(find_balance, [user])
-    balance = cursor.fetchone()
-    balance = balance[0]
-    balance -= money  # списание денег у юзера
-    update_balance = ('UPDATE users_balances SET account = ? WHERE username = ?')
-    cursor.execute(update_balance, [balance, user])
-    db.commit()
-    add_transaction(user, operation, money)  # запись тразакции user
-
-    lst_banknotes =  get_money(money)  # списание денег у атм
-    dict_number_banknotes = {str(i): lst_banknotes.count(i) for i in lst_banknotes}
-    user = 'admin'
-    user_file = user + "_balance.json"
-    with open(user_file, "r") as f:
-        dict_admin_balance =  json.load(f)
-    result_dict = {key: dict_admin_balance[key]-dict_number_banknotes[key] for key in dict_admin_balance if key in dict_number_banknotes}
-    dict_admin_balance.update(result_dict)  # обновление счета админа
-    dict_digit = {int(k):v for k, v in dict_admin_balance.items()}  # упорядочить словарь admin_balance.json
-    dict_digit_sorted = dict(sorted(dict_digit.items()))
-    dict_admin_balance_str = {str(k):v for k, v in dict_digit_sorted.items()}
-    with open(user_file, "w") as f:  # обновление admin_balance.json
-        json.dump(dict_admin_balance_str, f)
-    add_transaction(user, operation, money)  # запись транзакции admin(ATM)
-    return 
- 
- 
-def bonus_plus(user):
-    operation = "user bonus"
-    atm_database = 'ATM_database.db'
-    with sqlite3.connect(atm_database) as db:
-        cursor = db.cursor()
-    find_balance = ('SELECT account FROM users_balances WHERE username = ?')
-    cursor.execute(find_balance, [user])
-    balance = cursor.fetchone()
-    balance = balance[0]
-    bonus = int(balance * 0.1)
-    balance += bonus  # add bonus to user balance
-    update_balance = ('UPDATE users_balances SET account = ? WHERE username = ?')  # update user balance account
-    cursor.execute(update_balance, [balance, user])
-    db.commit()
-    add_transaction(user, operation, bonus)
-    return bonus
- 
- 
-def start():
-    user =  check_user()
-    if user and user != 'admin': # проверка валидности юзераи что он юзер и не админ
-        bonus = random.choices([1,0],[0.1,0.9])[0]  # бонус юзеру --> choices модуль random c вероятностью 10%(0.1) для 1(повезло) и 90%(0.9) для 0(неповезло)
-        if bonus:
-            operation = "user bonus"
-            print(f'Nou you get bonus {bonus_plus(user)} $ - 10% of your money.\nThere are {check_balance(user, operation)} $ in your balance\n')
-            
-        while True:
-            selection = int(input('''Input the operation:  
-    1. Check the balance
-    2. Replenishment of the balance
-    3. Withdraw money
-    4. Exit
-    
-    Your choice:'''))
-            if selection == 1:
-                print('Check the balance')
-                operation = "check balance"
-                print(f'Your balance has {check_balance(user, operation)} $\n')
-            elif selection == 2:
-                print('Replenishment of the balance')
-                money = input('Input the amount of replenishment of the balance: ')
-                if money.isdigit():
-                    money = int(money)
-                    if money in [1000, 500, 200, 100, 50, 20]:
-                        print(f'Your balance has {deposite(user, money)} $, it is increased on the amount {money} $\n')
-                    else:
-                        print('ATM take only: 20, 50, 100, 200, 500 and 1000 $!\n')
-                else:
-                    print('Input only a numeric value!\n')    
- 
-            elif selection == 3:
-                print('Withdraw money')
-                operation = "withdraw"
-                money = input('Input the amount: ')
-                if money.isdigit():
-                    money = int(money)
-                    if money != 0 and money % 10 == 0 and money not in [10, 30]:  # проверка выдачи введенной суммы
-                        if check_balance(user, operation) - money >= 0:  # проверка, есть ли введеная сумма для баланса юзера
-                            if check_balance_ATM(operation) - money >= 0:  # проверка, есть ли введеная сумма на балансе атм
-                                if check_enough_banknotes_atm(money):  # проверка, есть ли достаточное количество банкнот в атм
-                                    withdraw(user, money)
-                                    print(f'There are {check_balance(user, operation)} $ on your balance, it is decreased on {money} $')
-                                    print('Banknotes: ', *get_money(money), '$\n')
-                                else:
-                                    print(f'There are not banknotes in ATM for withdrawing!')
-                            else:
-                                print('There are no money for withdrawing at that moment!\n')                
-                        else:
-                            print('There are not enough money in your account!\n')
-                    else:
-                        print(f'Input amount, {money} $, ATM cannot issue available denominations of  20, 50, 100, 200, 500 and 1000 $!')                   
-                else:
-                    print('Input only a numeric value!\n')
-   
-            elif selection == 4:
-                print('\nATM system finished work!')
+                finish(login)
                 break
-            else:
-                print('Try agane!')    
+    user.change_balance(-summ)
+    user = User(login)
+    new_balance = user.get_balance()
+    transaction = {'transaction': f'withdrawing {summ}',
+                    'date': str(datetime.datetime.now()),
+                    'balance_before': old_balance,
+                    'balance_after': new_balance}
+    transaction = json.dumps(transaction)
+    cur.execute("INSERT INTO transactions (operation, username)  VALUES (?, ?)", (transaction, login))
+    conn.commit()
+    print(f'You received')
+    for element in elements_counter(denominations_give):
+        print(f'{element[0]} - {element[1]} bills')
+    print(f'Thank your for using our ATM, you withdraw {summ}, and now your balance is {new_balance}')
+    atm.change(money_after_give)
+    if input('Do you want to continue (print yes or no) ') == 'yes':
+        menu(login)
     else:
-        print('\nATM system finished work!')
-   
+        finish(login)
+
+
+def menu(login):
+    choice = input('if you want:\n'
+                    'Check your account - press 1\n'
+                    'Add money on your account - press 2\n'
+                    'Withdraw money - press 3\n'
+                    'For exit press 4\n'
+                    'For changing password press 5\n'
+                   )
+    choices = {
+        '1': show_balance, 
+        '2': add_money,
+        '3': withdraw_money,
+        '4': finish,
+        '5': change_password
+
+    }
+    choices[choice](login)
+
+
+def change_password(login):
+    if authenticated(login):
+        new_password = password_validator()
+        user = User(login)
+        user.change_password(new_password)
+        print('Your password was changed!')
+        if input('Do you want to continue? (yes/no)') == 'yes':
+            menu(login)
+        else:
+            finish(login)
+
+
+def collectors_menu(login):
+    choice = input('if you want:\n'
+                   'add money in atm 1\n'
+                   'check for denominations in ATM - press 2\n'
+                   'For exit press 3\n'
+                   )
+    choices = {
+        '1': incasation,
+        '2': checking_denominations,
+        '3': finish,
+    }
+    choices[choice](login)
+
+
+def start():
+    if input('Do you have an account? (print yes or no) ') == 'yes':
+        login = input('Hello, please input your login: ')
+        try:
+            user = User(login)
+        except:
+            if input('User not found, do you want to continue? (yes/no)') == 'yes':
+                start()
+            else:
+                finish(login)
+        else:
+            user = User(login)
+            user_status = user.get_status()
+            if user_status == 'Active':
+                if authenticated(login):
+                    menu(login)
+            if user_status == 'Collector':
+                if authenticated(login):
+                    collectors_menu(login)
+            if user_status == 'Blocked':
+                if input('Your account was blocked, do you want to try to unblock? (yes / no )') == 'yes':
+                    unblocker(login)
+
+    else:
+        if input('Do you want to register an account?(print yes or no) ') == 'yes':
+            login = input('Input your login here ')
+            new_user(login)
+        else:
+            finish('smth')
+
+
 start()
