@@ -61,7 +61,7 @@ def check_balance(login):
     con.close()
     return f'Текущий баланс пользователя {login} = {user_balance[0]}'
 
-
+#trubl
 def drop_balance(login):
     print('3 - Снятие баланса')
     con = sqlite3.connect('users.db')
@@ -94,7 +94,7 @@ def drop_balance(login):
         dropped_funds_local = dropped_funds
         funds_avaliable_in_banknotes = 0
 
-        # Основной цикл для проверки, можно ли снять по присутствующим в файле банкнотам нужную сумму
+        # Цикл для проверки, можно ли снять по присутствующим в файле банкнотам нужную сумму
         while True:
             # Счётчик неудачных попыток отнять банкноту для суммы.
             # Если = 3, ошибка "недостаточно банкнот"
@@ -119,6 +119,7 @@ def drop_balance(login):
 
         # Вносим изменения в базу, хранящую банкноты
         total_banknotes = [(total_banknotes_dict[key], key) for key in total_banknotes_dict]
+        print(f'{total_banknotes}')
         cur.executemany('UPDATE banknotes SET banknote_total=? WHERE banknote_value=?', total_banknotes)
 
         # Вносим изменения в баланс
@@ -134,7 +135,7 @@ def drop_balance(login):
         for key in dropped_banknotes.keys():
             if dropped_banknotes[key] > 0:
                 result += f'\n{dropped_banknotes[key]} банкнот по {key}'
-        return f'Поздравляем! Со счёта пользователя {login} было снято {dropped_funds} $ {result}'
+        return f'Со счёта пользователя {login} было снято {dropped_funds} $ {result}'
 
     except NegativeFunds:
         return 'Вы ввели некорректную сумму! Возврат в главное меню'
