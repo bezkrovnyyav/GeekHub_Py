@@ -232,19 +232,19 @@ def authenticated(login):
 def show_balance(login):
     user = User(login)
     print(user.get_balance())
-    choise = input('What do you want to do next?\n'
+    choice = input('What do you want to do next?\n'
                    '1 for withdraw money\n'
                    '2 to Add money on your account\n'
                    '3 to exit\n'
                    '4 to main menu\n')
-    choises = {
+    choices = {
         '1': withdraw_money,
         '2': add_money,
         '3': finish,
         '4': menu
     }
     if choice == '1'or choice == '2'or choice == '3'or choice == '4':
-        return choises[choise](login)
+        return choices[choice](login)
     else:
         show_balance(login)
 
@@ -336,7 +336,7 @@ def withdraw_money(login):
         print(f'{element[0]} - {element[1]} bills')
     print(f'You withdraw {summ}, and now your balance is {new_balance}')
     atm.change(money_after_give)
-    if input('do you want to continue (print yes or no) ') == 'yes':
+    if input('Do you want to continue (print yes or no) \n') == 'yes':
         menu(login)
     else:
         finish(login)
@@ -348,7 +348,7 @@ def menu(login):
                    '2. Add money on your account\n'
                    '3. Check your account\n'
                    '4. For exchange rates \n'
-                   '5. For exit press\n'
+                   '5. For exit \n'
                    '6. For changing password\n'
                    )
     if choice == '1'or choice == '2'or choice == '3'or choice == '4'or choice == '5' or choice == '6':
