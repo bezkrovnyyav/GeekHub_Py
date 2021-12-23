@@ -19,7 +19,7 @@ def rate_archive():
     currency = input('Select the currency you want to see: ')
 
     if currency not in ['USD', 'usd', 'Usd', 'EUR', 'eur', 'Eur', 'RUB', 'rub', 'Rub']:
-        print("There is no other currency fo displaying")
+        print("I CAN'T SHOW OTHER CURRRENCY!!!")
         return
 
     moment = input('Enter date in format dd.mm.yyyy: ')
@@ -27,13 +27,13 @@ def rate_archive():
     try:
         moment_format = dt.datetime.strptime(moment, "%d.%m.%Y")
     except ValueError:
-        print('Rong format')
+        print('INVALID FORMAT')
         return
 
     delta = dt.timedelta(days=1)
 
     if moment_format > date_now:
-        print("IT can not be displayed the curenncy exchange rate of the future")
+        print("I CAN'T TAKE Exchange Rates IN FUTURE!!!")
         return
 
     new_moment = moment
@@ -65,6 +65,6 @@ def rate_archive():
         new_moment = f'{temp[2]}.{temp[1]}.{temp[0]}'
     exit()
 
-def run_rate_archive():
-    while True:
-        yield rate_archive()
+while True:
+    rate_archive()
+
