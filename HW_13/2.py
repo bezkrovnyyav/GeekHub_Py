@@ -27,3 +27,10 @@ person_2 = Person('Andrii', 'Bezkrovnyi', 28)
 
 print(person_1.show_all_information())
 print(person_2.show_all_information())
+
+person_1.profession = 'scientist'
+person_2.profession = 'teacher'
+
+print(person_1.profession)
+print(person_2.profession)
+
