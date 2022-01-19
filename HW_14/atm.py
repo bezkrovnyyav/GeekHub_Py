@@ -80,7 +80,8 @@ class User(object):
     cur = conn.cursor()
 
     def __init__(self, username):
-        user = cur.execute(f"SELECT * FROM users WHERE username='{username}'").fetchone()
+        user = cur.execute('SELECT * FROM users WHERE username=?', (username, )).fetchone()
+        #print(user)
         self.__user = user
         self.__username = self.__user[1]
         self.__password = self.__user[2]
@@ -101,19 +102,19 @@ class User(object):
 
     def change_balance(self, change):
         new_balance = self.__balance + change
-        cur.execute(f"UPDATE users SET balance = {new_balance} WHERE username = '{self.__username}'")
+        cur.execute("UPDATE users SET balance = ? WHERE username = ? ", (new_balance, self.__username))
         conn.commit()
 
     def change_password(self, new_password):
-        cur.execute(f"UPDATE users SET password = '{new_password}' WHERE username = '{self.__username}'")
+        cur.execute(f"UPDATE users SET password = ? WHERE username = ?", (new_password, self.__username))
         conn.commit()
 
     def block(self):
-        cur.execute(f"UPDATE users SET status = 'Blocked' WHERE username = '{self.__username}'")
+        cur.execute(f"UPDATE users SET status = 'Blocked' WHERE username = ?", (self.__username, ))
         conn.commit()
 
     def unblock(self):
-        cur.execute(f"UPDATE users SET status = 'Active' WHERE username = '{self.__username}'")
+        cur.execute(f"UPDATE users SET status = 'Active' WHERE username = ?", (self.__username, ))
         conn.commit()
 
 
