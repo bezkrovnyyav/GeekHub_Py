@@ -35,6 +35,9 @@ class VikkaScrapyPipeline:
 			(item["news_title"], item["news_description"], item["tags_string"], item["news_url"], item["news_date"]))
 		self.con.commit()
 		self.con.close()
+<<<<<<< HEAD
 
+=======
+>>>>>>> ce525500651935761aba38562bc3e9a23617ba39
 
 		return item
