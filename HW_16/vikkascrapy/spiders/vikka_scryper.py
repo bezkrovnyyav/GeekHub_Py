@@ -81,6 +81,7 @@ class VikkaBotSpider(scrapy.Spider):
 
 		yield item
 		
+		
 
 			    
 

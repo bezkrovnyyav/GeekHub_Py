@@ -39,3 +39,4 @@ class VikkaScrapyPipeline:
 
 
 		return item
+		
