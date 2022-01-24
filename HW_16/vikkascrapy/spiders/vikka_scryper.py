@@ -44,17 +44,15 @@ class VikkaBotSpider(scrapy.Spider):
 				url = news_link,
 				callback =self.parse_news
 				)
-
 		
-		next_a_section = soup.select_one('.next')
-		next_link  = next_a_section.get('href')
-		if next_link is not None:
+		next_a_section = soup.select_one('a.next.page-numbers')
+		if next_a_section is not None:
+			next_link  = next_a_section.get('href')
 			yield scrapy.Request(
 				url = next_link,
 				callback =self.parse_news_list
 				)
-		else:
-			print('Error, no tags')
+
 
 	def parse_news(self, response):
 		item = VikkaScrapyItem()

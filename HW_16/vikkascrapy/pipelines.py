@@ -30,14 +30,12 @@ class VikkaScrapyPipeline:
 			)""")
 
 	def process_item(self, item, spider):
-		
+		self.con = sqlite3.connect("vikka_news.db")
+		self.cur = self.con.cursor()
 		self.cur.execute("INSERT OR IGNORE INTO news (title, description, tags, url, news_date) VALUES (?,?,?,?,?)", 
 			(item["news_title"], item["news_description"], item["tags_string"], item["news_url"], item["news_date"]))
 		self.con.commit()
 		self.con.close()
-<<<<<<< HEAD
 
-=======
->>>>>>> ce525500651935761aba38562bc3e9a23617ba39
 
 		return item
