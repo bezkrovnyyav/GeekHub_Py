@@ -3,8 +3,25 @@ from pathlib import Path
 try:
     from scraper.local_settings import *
 except ImportError:
-    pass
+    # Build paths inside the project like this: BASE_DIR / 'subdir'.
+    BASE_DIR = Path(__file__).resolve().parent.parent
 
+    # SECURITY WARNING: keep the secret key used in production secret!
+    SECRET_KEY = 'django-insecure-p0fr%t^adppa*a9m7h+5=v-sects+zdwzv(^fp2ph=_dd_6+!='
+
+    # Database
+    # https://docs.djangoproject.com/en/4.0/ref/settings/#databases
+
+    DATABASES = {
+        'default': {
+            'ENGINE': 'django.db.backends.sqlite3',
+            'NAME': BASE_DIR / 'db.sqlite3',
+        }
+    }
+
+DEBUG = True
+
+ALLOWED_HOSTS = ['*']
 
 INSTALLED_APPS = [
         'homework',
