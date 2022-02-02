@@ -1,26 +1,36 @@
 from django.shortcuts import render
-from django.http import HttpResponse
 from.models import Askstories, Jobstories, Showstories, Newstories
 import requests
 
+
 def index(request):
+    value = request.POST.get('news_category')
+    if value == 'new':
+        new()
+    elif value == 'ask':
+        ask()
+    elif value == 'show':
+        show()
+    elif value == 'job':
+        job()
     return render(request, 'homework/index.html')
 
 
-def proccess(name):
+def proccess(name, list_id):
     response = requests.get(f'https://hacker-news.firebaseio.com/v0/{name}.json?print=pretty')
     text = response.json()
     all_list = list()
     for id in text:
-        response_id = requests.get(f'https://hacker-news.firebaseio.com/v0/item/{id}.json?print=pretty')
-        json = response_id.json()
-        if json != None:
-            all_list.append(json)
+        if id not in list_id:
+            response_id = requests.get(f'https://hacker-news.firebaseio.com/v0/item/{id}.json?print=pretty')
+            json = response_id.json()
+            if json != None:
+                all_list.append(json)
     return all_list
 
-
-def askstories(request):
-    for json in proccess('askstories'):
+def ask():
+    list_id = Askstories.objects.all().values_list('id', flat=True)
+    for json in proccess('askstories', list_id):
         try:
             table = Askstories.objects.create(
                 by=json['by'],
@@ -36,11 +46,11 @@ def askstories(request):
             table.save()
         except:
             print('Exist')
-    return HttpResponse('Askstories done')
 
 
-def showstories(request):
-    for json in proccess('showstories'):
+def show():
+    list_id = Showstories.objects.all().values_list('id', flat=True)
+    for json in proccess('showstories', list_id):
         try:
             table = Showstories.objects.create(
                 by=json['by'],
@@ -57,11 +67,11 @@ def showstories(request):
             table.save()
         except:
             print('Exist')
-    return HttpResponse('Showstories done')
 
 
-def jobstories(request):
-    for json in proccess('jobstories'):
+def job():
+    list_id = Jobstories.objects.all().values_list('id', flat=True)
+    for json in proccess('jobstories', list_id):
         try:
             table = Jobstories.objects.create(
                 by=json['by'],
@@ -76,11 +86,11 @@ def jobstories(request):
             table.save()
         except:
             print('Exist')
-    return HttpResponse('Jobstories done')
 
 
-def newstories(request):
-    for json in proccess('newstories'):
+def new():
+    list_id = Newstories.objects.all().values_list('id', flat=True)
+    for json in proccess('newstories', list_id):
         try:
             table = Newstories.objects.create(
                 by=json['by'],
@@ -97,4 +107,3 @@ def newstories(request):
             table.save()
         except:
             print('Exist')
-    return HttpResponse('Newstories done')
