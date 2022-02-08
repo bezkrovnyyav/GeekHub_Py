@@ -1,0 +1,9 @@
+{% extends 'main/base.html' %}
+{% load static %}
+{% block title %}Basket fpr products{% endblock %}
+{% block content %}
+    {% for user_card in product %}
+        <h5>{{user_card.product}}</h5>
+        <br>
+    {% endfor %}
+{% endblock %}

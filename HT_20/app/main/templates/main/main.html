@@ -1,0 +1,31 @@
+{% extends 'main/base.html' %}
+{% load static %}
+{% block title %}All products{% endblock %}
+{% block content %}
+   <h3>All products</h3>
+    <form action="" method="POST">{% csrf_token %}
+        <select name="category">
+            <option value="all">all</option>
+            <option value="phone">phone</option>
+            <option value="tablet">tablet</option>
+            <option value="laptop">laptop</option>
+        </select>
+        <button type="submit">GO</button>
+    </form>
+   {% for d in data %}
+      <div class="card" style="width: 18rem;">
+        <div class="card-body">
+          <h5 class="card-title">{{ d.name }}</h5>
+          <p class="card-text">{{ d.description }}</p>
+           <p>{{ d.category }}</p>
+            {% if user.is_authenticated %}
+            <a href="{% url 'basket' d.id %}" class="btn btn-primary" >Add to basket</a>
+                {% if user.is_superuser %}
+                    <a href="{% url 'delete' d.id %}" class="btn btn-primary" style="margin-top: 10px;">Delete product</a>
+                {% endif %}
+            {% endif %}
+        </div>
+      </div>
+   {% endfor %}
+
+{% endblock %}
