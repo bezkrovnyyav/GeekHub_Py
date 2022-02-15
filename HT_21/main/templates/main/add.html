@@ -1,0 +1,13 @@
+{% extends 'main/base.html' %}
+{% load static %}
+{% block title %}Add new product{% endblock %}
+{% block content %}
+    <form action="" method="post">
+        {% csrf_token %}
+        {{ form.name }}<br>
+        {{ form.description }}<br>
+        {{ form.category }}<br>
+        <span>{{ error }}</span>
+        <button type="submit" class="btn btn-success">ADD</button>
+    </form>
+{% endblock %}

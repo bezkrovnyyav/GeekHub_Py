@@ -1,0 +1,16 @@
+{% extends 'main/base.html' %}
+{% load static %}
+{% block title %}Basket fpr products{% endblock %}
+{% block content %}
+    {% for product in all %}
+        {% for d in product %}
+        <div class="card" style="width: 18rem;">
+            <div class="card-body">
+              <h5 class="card-title">{{ d.name }}</h5>
+              <p class="card-text">{{ d.description }}</p>
+               <p>{{ d.category }}</p>
+            </div>
+        </div>
+        {% endfor %}
+    {% endfor %}
+{% endblock %}

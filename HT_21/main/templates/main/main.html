@@ -1,0 +1,54 @@
+{% extends 'main/base.html' %}
+{% load static %}
+{% block title %}All products{% endblock %}
+{% block content %}
+   <h3>All products</h3>
+    <form action="" method="POST">{% csrf_token %}
+        <select name="category">
+            <option value="all">all</option>
+            <option value="phone">phone</option>
+            <option value="tablet">tablet</option>
+            <option value="laptop">laptop</option>
+        </select>
+        <button type="submit">GO</button>
+    </form>
+   {% for d in data %}
+      <div class="card" style="width: 18rem;">
+            <div class="card-body">
+              <h5 class="card-title">{{ d.name }}</h5>
+              <p class="card-text">{{ d.description }}</p>
+               <p>{{ d.category }}</p>
+                <form action='{% url "basket" %}' method="post">
+                    {% csrf_token %}
+                    <input type="hidden" class="product" name="product_id" value="{{ d.id }}">
+                    <button id="cart" type="submit" data-href="{% url 'basket' %}"> Add to cart</button>
+                </form>
+                    {% if user.is_superuser %}
+                        <a href="{% url 'delete' d.id %}" class="btn btn-primary" style="margin-top: 10px;">Delete product</a>
+                    {% endif %}
+        </div>
+      </div>
+   {% endfor %}
+<script src="https://ajax.googleapis.com/ajax/libs/jquery/3.6.0/jquery.min.js"></script>
+<script>
+    $('#cart').click(function (e) {
+        e.preventDefault();
+        var _this = $(this);
+        var urlButton = _this.attr('data-href');
+        $.ajax({
+            url: urlButton,
+            data: _this.serialize(),
+            beforeSend: function(xhr, settings){
+                xhr.setRequestHeader('X-CSRFToken', '{{ csrf_token }}');
+            },
+            type: 'post',
+            success: function (res) {
+                console.log(res);
+            },
+            error: function () {
+                console.log('error');
+            },
+        })
+    })
+</script>
+{% endblock %}
