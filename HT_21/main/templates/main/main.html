@@ -13,7 +13,7 @@
         <button type="submit">GO</button>
     </form>
    {% for d in data %}
-      <div class="card" style="width: 18rem;">
+      <div class="cart_div" style="width: 18rem;">
             <div class="card-body">
               <h5 class="card-title">{{ d.name }}</h5>
               <p class="card-text">{{ d.description }}</p>
@@ -29,21 +29,20 @@
         </div>
       </div>
    {% endfor %}
-<script src="https://ajax.googleapis.com/ajax/libs/jquery/3.6.0/jquery.min.js"></script>
 <script>
     $('#cart').click(function (e) {
         e.preventDefault();
-        var _this = $(this);
-        var urlButton = _this.attr('data-href');
+        var urlButton = $(this).attr('data-href');
         $.ajax({
             url: urlButton,
-            data: _this.serialize(),
+            data: {'products': $('.product').val()},
             beforeSend: function(xhr, settings){
                 xhr.setRequestHeader('X-CSRFToken', '{{ csrf_token }}');
             },
             type: 'post',
             success: function (res) {
                 console.log(res);
+                console.log('Done');
             },
             error: function () {
                 console.log('error');
